@@ -26,12 +26,7 @@ bubblePlot <- function( table , xCol, yCol, xGridSize, yGridSize , cellMin ){
 		x_pos = floor( ( table[ i , xCol ] - xMin ) / xGridSize )
 		y_pos = floor( ( table[ i , yCol ] - yMin ) / yGridSize )
 
-		#x_pos = floor( ( table[ i , xCol ] - xMin ) / xCells )
-		#y_pos = floor( ( table[ i , yCol ] - yMin ) / yCells )
-
-
 		array_index <- x_pos + (xCells * y_pos ) + 1
-		#array_index <- x_pos + (plot_width * y_pos ) + 1
 	
 		if ( is.na( data_array[ array_index ] ) ) {
 			data_array[array_index ] <- 1
@@ -63,4 +58,8 @@ bubblePlot <- function( table , xCol, yCol, xGridSize, yGridSize , cellMin ){
 
 
 raw_data <- read.csv("O:\\\\Documents\\Data\\ALSPAC\\ALSPAC.csv", header=TRUE )  # read csv file 
+
 bubblePlot( raw_data , "BMI.7" , "wt.7", 2 , 2 , 5 )
+
+#raw_data[ 1:10, c("BMI.7","wt.7") ]
+#bubblePlot( data.frame(c(10,17,11,12,16),c(15,18,23,45,50)) , 1 , 2, 1 , 1 , 0 )
