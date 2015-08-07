@@ -1,3 +1,3 @@
-# bubblePlot
+# Non Disclosive Protypes
 
-Prototype bubble plot function
+Prototype functions designed to address the problem of disclosive scatter plots.
