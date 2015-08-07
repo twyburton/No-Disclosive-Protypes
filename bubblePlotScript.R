@@ -1,5 +1,8 @@
 bubblePlot <- function( table , xCol, yCol, gridSize , cellMin ){
 
+	# Prepare inputs
+	gridSize <- floor(gridSize)
+
 	# Get max and min of axis
 	xMax <- max(table[, xCol ], na.rm = TRUE)
 	xMin <- min(table[, xCol ], na.rm = TRUE)
