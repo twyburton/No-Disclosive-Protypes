@@ -1,5 +1,28 @@
+#' 
+#' @title Creates a dataframe of mean points
+#' @description The mean values of every point and its four closest neigbours is calculated for use by ds.meanPlot
+#' @details Grid cells with less than 5 point are discarded.
+#' @param x.col the name of the column to plot on the x-axis
+#' @param y.col the name of the column to plot on the y-axis
+#' @param grid.dim the number of cells that the x-axis and y-axis are split into
+#' @param recursiveMode a logical expression for whether or not recursive mode is used during calcualtion
+#' If \code{recursiveMode} is set to "TRUE", cells that contain more values than the recursive threshold will have meanPlotDS performed on them again. This significaly improves the time of the function.
+#' If \code{recursiveMode} is set to "FALSE",
+#' @return a dataframe containing the mean points
+#' @author Burton, T.
+#' @export
+#' 
 
-meanPlotDS <- function( table=NULL , xCol=NULL , yCol=NULL , grid.dim=10 , recursiveMode=TRUE ) {
+
+meanPlotDS <- function( table=NULL , x.col=NULL , y.col=NULL , grid.dim=10 , recursiveMode=TRUE ) {
+
+####### TESTING DATA
+
+	d <- read.csv("O:/Documents/Data/New_HOP_Data/HOP_simulated_data.csv", header=TRUE )
+
+####### END TESTING DATA
+
+
 	# Save original table for later - Required for undoing standardised scale
 	table.save = table
 
@@ -11,25 +34,25 @@ meanPlotDS <- function( table=NULL , xCol=NULL , yCol=NULL , grid.dim=10 , recur
 	recusive.threshold = 500
 
 	# Initalised output dataframe
-	colClasses = c( typeof(table[, xCol]) , typeof(table[, yCol])  )
-	col.names = c( xCol, yCol )
+	colClasses = c( typeof(table[, x.col]) , typeof(table[, y.col])  )
+	col.names = c( x.col, y.col )
 
 	closestOutput <- read.table(text = "",
                  colClasses = colClasses,
                  col.names = col.names)
 
 	# Remove unneeded columns from table
-	table <- table[, c( xCol, yCol ) ]
+	table <- table[, c( x.col, y.col ) ]
 
 	# Standardise scale
-	table[, xCol ] <- (table[, xCol ] - mean(table[, xCol] ) )/sqrt(var(table[, xCol ]))
-	table[, yCol ] <- (table[, yCol ] - mean(table[, yCol] ) )/sqrt(var(table[, yCol ]))
+	table[, x.col ] <- (table[, x.col ] - mean(table[, x.col] ) )/sqrt(var(table[, x.col ]))
+	table[, y.col ] <- (table[, y.col ] - mean(table[, y.col] ) )/sqrt(var(table[, y.col ]))
 
 	# Get min values
-	x.min <- min(table[, xCol ], na.rm = TRUE)
-	y.min <- min(table[, yCol ], na.rm = TRUE)
-	x.max <- max(table[, xCol ], na.rm = TRUE)
-	y.max <- max(table[, yCol ], na.rm = TRUE)
+	x.min <- min(table[, x.col ], na.rm = TRUE)
+	y.min <- min(table[, y.col ], na.rm = TRUE)
+	x.max <- max(table[, x.col ], na.rm = TRUE)
+	y.max <- max(table[, y.col ], na.rm = TRUE)
 
 	xDiff <- ( x.max - x.min ) + ( x.max - x.min ) * 0.01
 	yDiff <- ( y.max - y.min ) + ( y.max - y.min ) * 0.01
@@ -46,10 +69,10 @@ meanPlotDS <- function( table=NULL , xCol=NULL , yCol=NULL , grid.dim=10 , recur
 
 	# ==== Go through each point of data and sort into the appropriate grid cell ====
 	for( i in 1:nrow(table)){ 
-		xGrid <- floor( ( table[i, xCol ] - x.min ) / gridWidth ) + 1
-		yGrid <- floor( ( table[i, yCol ] - y.min ) / gridHeight ) + 1
+		x.grid <- floor( ( table[i, x.col ] - x.min ) / gridWidth ) + 1
+		y.grid <- floor( ( table[i, y.col ] - y.min ) / gridHeight ) + 1
 
-		gridIndex = xGrid + ( yGrid * n.xGrids ) - n.xGrids
+		gridIndex = x.grid + ( y.grid * n.xGrids ) - n.xGrids
 
 		if( is.na( gridList[ gridIndex ] )  ){
 			gridList[ gridIndex ] <- list( i )	
@@ -91,8 +114,8 @@ meanPlotDS <- function( table=NULL , xCol=NULL , yCol=NULL , grid.dim=10 , recur
 				# Go through each point in the inner cell and calculate nearest 4 mean.
 				for( j in 1:length( unlist( gridList[i] ) )  ){
 					# Get x and y for point to calculate
-					x.pos = table_points_to_do[j, xCol ]
-					y.pos = table_points_to_do[j, yCol ]
+					x.pos = table_points_to_do[j, x.col ]
+					y.pos = table_points_to_do[j, y.col ]
 
 					# Distance Calculation function
 					distance <- function( x0 , y0 , x1 , y1 ){
@@ -101,10 +124,10 @@ meanPlotDS <- function( table=NULL , xCol=NULL , yCol=NULL , grid.dim=10 , recur
 
 
 					# Get a list of all points to compare against
-					smallBox<- table_to_check[ ( distance( table_to_check[,xCol] , table_to_check[,yCol] , x.pos , y.pos ) != 0) ,]
+					smallBox<- table_to_check[ ( distance( table_to_check[,x.col] , table_to_check[,y.col] , x.pos , y.pos ) != 0) ,]
 
 					# Calculate the distance to each point to compare against
-					smallBox[,"distance"] <-  distance( x.pos, y.pos, smallBox[,xCol] , smallBox[,yCol])
+					smallBox[,"distance"] <-  distance( x.pos, y.pos, smallBox[,x.col] , smallBox[,y.col])
 		
 					# Order the distances to find the closest 4
 					subSmall <- smallBox[ order(smallBox[,"distance"]), ][1:4,]
@@ -119,11 +142,11 @@ meanPlotDS <- function( table=NULL , xCol=NULL , yCol=NULL , grid.dim=10 , recur
 					avg <- colMeans( subSmall)
 
 					# Add mean value to output table
-					closestOutput[ nrow(closestOutput) + 1, ] <- c( avg[ xCol ] , avg[ yCol ] )
+					closestOutput[ nrow(closestOutput) + 1, ] <- c( avg[ x.col ] , avg[ y.col ] )
 				}
 
 			} else {
-				closestOutput <- rbind( closestOutput , meanPlot( table[ unlist(gridList[i]), ] , xCol , yCol , ceiling(grid.dim/2)) )
+				closestOutput <- rbind( closestOutput , meanPlotDS( table[ unlist(gridList[i]), ] , x.col , y.col , ceiling(grid.dim/2)) )
 			}
 
 		}
@@ -132,14 +155,10 @@ meanPlotDS <- function( table=NULL , xCol=NULL , yCol=NULL , grid.dim=10 , recur
 	} 
 
 	# Undo standardised scale
-	closestOutput[,xCol] <- (closestOutput[,xCol] * sqrt(var(table.save[,xCol]))) + mean(table.save[,xCol])
-	closestOutput[,yCol] <- (closestOutput[,yCol] * sqrt(var(table.save[,yCol]))) + mean(table.save[,yCol])
+	closestOutput[,x.col] <- (closestOutput[,x.col] * sqrt(var(table.save[,x.col]))) + mean(table.save[,x.col])
+	closestOutput[,y.col] <- (closestOutput[,y.col] * sqrt(var(table.save[,y.col]))) + mean(table.save[,y.col])
 
 	# Return table of mean output values 
 	return( closestOutput )
 
-
-
 }
-
-
