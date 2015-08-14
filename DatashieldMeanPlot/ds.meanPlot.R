@@ -12,6 +12,8 @@
 #' @param recursiveMode a logical expression for whether or not recursive mode is used during calcualtion
 #' If \code{recursiveMode} is set to "TRUE", cells that contain more values than the recursive threshold will have meanPlotDS performed on them again. This significaly improves the time of the function.
 #' If \code{recursiveMode} is set to "FALSE",
+#' @param regression a logical expression for whether or not a regression line calculated using loess is displayed.
+#' @param regression.span A numeric that controls the smoothing of the regression line.
 #' @return one or more scatter plot objects and plots depending on the argument \code{type}
 #' @author Burton, T.
 #' @export
@@ -44,16 +46,12 @@
 
 
 
-ds.meanPlot <- function( table=NULL , x=NULL , y=NULL , type='combine', grid.dim=10 , recursiveMode=TRUE , datasources=NULL ) {
+ds.meanPlot <- function( x=NULL , y=NULL , type='combine', grid.dim=10 , recursiveMode=TRUE, regression=FALSE , regression.span=1 , datasources=NULL ) {
 
 	# if no opal login details are provided look for 'opal' objects in the environment
 ##	if(is.null(datasources)){
 ##		datasources <- findLoginObjects()
 ##	}
-
-	if(is.null( table )){
-   		stop("Please provide the name of the input table!", call.=FALSE)
-	}
 
 	if(is.null( x )){
    		stop("Please provide the name of the column for x on the plot!", call.=FALSE)
@@ -64,24 +62,35 @@ ds.meanPlot <- function( table=NULL , x=NULL , y=NULL , type='combine', grid.dim
 	}
 
 
-# SERVER CALL STUFF
-	output.local <- meanPlotDS( table , x , y , grid.dim , recursiveMode )
-
+#### SERVER CALL STUFF
+	output.local <- meanPlotDS( x , y , grid.dim , recursiveMode )
+#### END SERVER CALL STUFF
 
 	if(type=="combine"){
 
-		plot(table[,x] , table[,y], xlab = x, ylab = y, col="red")
-		points(output.local[,x] , output.local[,y], xlab = x, ylab = y, col="black")		
-		print(paste( "Points Plotted: "  , nrow(output.local)))
+		plot( output.local[,"x"] , output.local[,"y"], col="black" )
+		print( paste( "Points Plotted: "  , nrow(output.local) ) )
 
-	}else if(type=="split"){
+		if( regression ){
+
+			# Apply loess smoothing.
+			y.loess <<- loess(y ~ x, span=regression.span, data.frame(x=output.local[,"x"] , y=output.local[,"y"]))
+
+			# Compute loess smoothed values for all points along the curve
+			y.predict <- predict(y.loess, data.frame(x=output.local[,"x"]))
+
+			# Plot the curve.
+			lines(output.local[,"x"],y.predict,col="red")
+		}
+
+	} else if(type=="split") {
     
 		#ll <- length(datasources)
 		#for(i in 1:ll){
 		#	plot(output.local[,x] , output.local[,y], xlab = x, ylab = y, col="black")		
 		#}
-  
-	}else{
+
+	} else {
 
 		stop('Function argument "type" has to be either "combine" or "split"')
 
@@ -91,8 +100,8 @@ ds.meanPlot <- function( table=NULL , x=NULL , y=NULL , type='combine', grid.dim
 
 ###### TESTING ######
 
-data <- read.csv("O:/Documents/Data/New_HOP_Data/HOP_simulated_data.csv", header=TRUE )
-output <- ds.meanPlot( data[1:10000,] , x="LAB_HDL" , y="LAB_TSC" , grid.dim=10 , recursiveMode=TRUE )
+#data <- read.csv("O:/Documents/Data/New_HOP_Data/HOP_simulated_data.csv", header=TRUE )
+#output <- ds.meanPlot( x=data$LAB_HDL , y=data$LAB_TSC , grid.dim=10 , recursiveMode=TRUE , regression=TRUE )
 
-#data <- read.csv("O:/Documents/Data/ALSPAC/ALSPAC.csv", header=TRUE )
-#output <- ds.meanPlot( data , x="BMI.7" , y="wt.7" , grid.dim=10 , recursiveMode=TRUE )
+data <- read.csv("O:/Documents/Data/ALSPAC/ALSPAC.csv", header=TRUE )
+output <- ds.meanPlot( x=data$BMI.7 , y=data$BMI.11 , grid.dim=10 , recursiveMode=TRUE, regression=TRUE, regression.span=0.8  )
