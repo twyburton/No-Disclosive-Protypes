@@ -14,7 +14,7 @@
 #' 
 
 
-meanPlotDS <- function( table=NULL , x.col=NULL , y.col=NULL , grid.dim=10 , recursiveMode=TRUE ) {
+meanPlotDS <- function( x=NULL , y=NULL , grid.dim=10 , recursiveMode=TRUE ) {
 
 ####### TESTING DATA
 
@@ -22,6 +22,11 @@ meanPlotDS <- function( table=NULL , x.col=NULL , y.col=NULL , grid.dim=10 , rec
 
 ####### END TESTING DATA
 
+	table <- data.frame( x , y )
+	colnames(table) <- c( "x" , "y" )
+
+	x.col <- "x"
+	y.col <- "y"
 
 	# Save original table for later - Required for undoing standardised scale
 	table.save = table
@@ -29,7 +34,7 @@ meanPlotDS <- function( table=NULL , x.col=NULL , y.col=NULL , grid.dim=10 , rec
 	# Group size
 	min_group_size = 5
 
-	# Recusive threshold 
+	# Recusive threshold
 	#	- If recursiveMode = TRUE this is the cell value at which a meanPlot will be recursivly called onto a cell
 	recusive.threshold = 500
 
@@ -80,8 +85,6 @@ meanPlotDS <- function( table=NULL , x.col=NULL , y.col=NULL , grid.dim=10 , rec
 			gridList[[ gridIndex ]][ length(gridList[[ gridIndex ]]) + 1 ] <- i
 		}
 	}
-
-
 
 	# ==== Points have been sorted into their cells ====
 	# ==== Go through each grid cell and find closest ====
@@ -139,14 +142,14 @@ meanPlotDS <- function( table=NULL , x.col=NULL , y.col=NULL , grid.dim=10 , rec
 					subSmall[ nrow(subSmall) + 1, ] <- c( x.pos , y.pos, 0 )
 	
 					# Calculate the x and y means
-					avg <- colMeans( subSmall)
+					avg <- colMeans( subSmall )
 
 					# Add mean value to output table
 					closestOutput[ nrow(closestOutput) + 1, ] <- c( avg[ x.col ] , avg[ y.col ] )
 				}
 
 			} else {
-				closestOutput <- rbind( closestOutput , meanPlotDS( table[ unlist(gridList[i]), ] , x.col , y.col , ceiling(grid.dim/2)) )
+				closestOutput <- rbind( closestOutput , meanPlotDS( table[ unlist(gridList[i]), x.col ], table[ unlist(gridList[i]), y.col ]  , ceiling(grid.dim/2)) )
 			}
 
 		}
